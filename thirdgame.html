@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sound Snap</title>
+  <link href="https://fonts.cdnfonts.com/css/opendyslexic" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'OpenDyslexic', sans-serif;
+      text-align: center;
+      background-color: #FDF6E3; /* Soft cream background */
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .game-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 25px;
+      max-width: 1200px;
+      margin: 20px auto;
+    }
+
+    .card {
+      background: #FFFFFF;
+      border: 3px solid #A9A9A9;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1.4em;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+
+    .card.correct {
+      background-color: #d4edda; /* Light green */
+      border-color: #28a745;
+      transform: scale(1.05);
+    }
+
+    .card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+    }
+
+    .card-name {
+      margin-top: auto;
+      padding: 15px 10px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .controls {
+      margin-top: 20px;
+    }
+
+    .sound-button, .next-button {
+      padding: 12px 25px;
+      font-size: 20px;
+      margin: 10px;
+      background: #e0f7fa;
+      color: #000000;
+      border: 2px solid #3B82F6;
+      border-radius: 15px;
+      cursor: pointer;
+      font-family: 'OpenDyslexic', sans-serif;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    .sound-button:hover, .next-button:hover {
+      background: #FFFFFF;
+      border-color: #22C55E;
+    }
+
+    .message {
+      margin-top: 20px;
+      font-size: 22px;
+      height: 30px;
+      font-weight: bold;
+      transition: color 0.3s ease;
+    }
+
+    /* Style for correct message */
+    .message-correct {
+        color: #28a745; /* Green */
+    }
+
+    /* Style for incorrect message with shake animation */
+    .message-incorrect {
+        color: #dc3545; /* Red */
+        animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🗣 Listen & Match Game</h1>
+  <div class="controls">
+    <button class="sound-button" onclick="speakAnimal()">🔊 Play Animal Name</button>
+    <button class="next-button" onclick="nextPattern()">🔁 Next Pattern</button>
+  </div>
+  <div class="message" id="message"></div>
+  <div class="game-container" id="gameContainer"></div>
+
+  <script>
+    const allAnimals = [
+      { name: "Cat", image: "https://images.pexels.com/photos/104827/cat-pet-animal-domestic-104827.jpeg" },
+      { name: "Dog", image: "https://cdn.shopify.com/s/files/1/0086/0795/7054/files/Golden-Retriever.jpg" },
+      { name: "Cow", image: "https://cdn.britannica.com/23/523-050-0C120420/cow-Holstein-Friesian.jpg" },
+      { name: "Duck", image: "https://i.natgeofe.com/k/327b01e8-be2e-4694-9ae9-ae7837bd8aea/mallard-male-swimming_3x2.jpg" },
+      { name: "Horse", image: "https://cdn.britannica.com/96/1296-050-4A65097D/gelding-bay-coat.jpg" },
+      { name: "Sheep", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Lleyn_sheep.jpg/960px-Lleyn_sheep.jpg" },
+      { name: "Rooster", image: "https://cdn.hswstatic.com/gif/gettyimages-185009382.jpg" },
+      { name: "Elephant", image: "https://t4.ftcdn.net/jpg/00/43/64/51/360_F_43645148_tyVMgFvaLyP7w4K0hiaZSyqKJhxX7Apr.jpg" },
+      { name: "Lion", image: "https://www.krugerpark.co.za/images/black-maned-lion-shem-compion-786x500.jpg" },
+      { name: "Frog", image: "https://t4.ftcdn.net/jpg/01/02/80/73/360_F_102807319_yiZGhVkFloR2NtGAo7d6jZjbxMdET7OH.jpg" },
+      { name: "Bear", image: "https://t3.ftcdn.net/jpg/00/16/81/88/360_F_16818804_3zqaNN9Bg4Pojl8iiiRiDvP67P6OoYYi.jpg" },
+      { name: "Monkey", image: "https://a-z-animals.com/media/2022/09/shutterstock_88192939-1024x768.jpg" },
+      { name: "Pig", image: "https://static.vecteezy.com/system/resources/thumbnails/028/669/877/small/a-cute-fat-pig-on-white-background-generative-ai-illustration-photo.jpeg" },
+      { name: "Rabbit", image: "https://images.pexels.com/photos/326012/pexels-photo-326012.jpeg" },
+      { name: "Tiger", image: "https://t3.ftcdn.net/jpg/03/83/46/48/360_F_383464809_VAyaM0bON9NZT1UCPXghp8GhHx56QKqm.jpg" },
+      { name: "Wolf", image: "https://cdn.britannica.com/07/5207-050-5BC9F251/Gray-wolf.jpg" },
+      { name: "Zebra", image: "https://t4.ftcdn.net/jpg/00/51/41/23/360_F_51412322_Fqm0IRJKSMsCii6pRrOV0Zsrz5iXYxNe.jpg" },
+      { name: "Giraffe", image: "https://cdn.sanity.io/images/cphrnle8/production/231c6350832d857ffb4e20b9e797ad0c328ff0c9-1440x811.jpg?w=1440&q=100&fit=max" },
+      { name: "Panda", image: "https://animalfactguide.com/wp-content/uploads/2025/03/panda-closeup.jpg" },
+      { name: "Kangaroo", image: "https://www.worldanimalprotection.us/cdn-cgi/image/width=800,format=auto,fit=cover/siteassets/images/wildlife/kangaroos/kangaroo-joey-getty.jpg" }
+    ];
+
+    let currentSet = [];
+    let currentTarget = null;
+    const gameContainer = document.getElementById("gameContainer");
+    const messageBox = document.getElementById("message");
+
+    function getRandomSubset(arr, count) {
+      const shuffled = arr.slice().sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, count);
+    }
+
+    function renderCards() {
+      gameContainer.innerHTML = "";
+      currentSet.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.dataset.name = item.name;
+
+        card.innerHTML = `
+          <img src="${item.image}" alt="${item.name}" />
+          
+        `;
+
+        card.addEventListener("click", () => handleCardClick(item.name, card));
+        gameContainer.appendChild(card);
+      });
+    }
+// <div class="card-name">${item.name}</div>
+    function speakAnimal() {
+      if (currentSet.length === 0) return;
+      const randomIndex = Math.floor(Math.random() * currentSet.length);
+      currentTarget = currentSet[randomIndex].name;
+
+      const utterance = new SpeechSynthesisUtterance(currentTarget);
+      utterance.lang = 'en-US';
+      speechSynthesis.speak(utterance);
+
+      clearHighlights();
+      messageBox.textContent = "";
+      messageBox.className = "message"; // Reset message classes
+    }
+
+    function handleCardClick(name, cardElement) {
+      if (!currentTarget) return;
+
+      if (name === currentTarget) {
+        cardElement.classList.add("correct");
+        messageBox.textContent = "✅ Good job!";
+        messageBox.className = "message message-correct"; // Add correct class
+        currentTarget = null;
+
+        setTimeout(() => {
+          nextPattern();
+        }, 1500);
+      } else {
+        messageBox.textContent = "❌ Try again!";
+        messageBox.className = "message message-incorrect"; // Add incorrect class
+        setTimeout(() => {
+          messageBox.textContent = "";
+          messageBox.className = "message"; // Reset on timeout
+        }, 1500);
+      }
+    }
+
+    function clearHighlights() {
+      document.querySelectorAll(".card").forEach(card => {
+        card.classList.remove("correct");
+      });
+    }
+
+    function nextPattern() {
+      currentSet = getRandomSubset(allAnimals, 5);
+      currentTarget = null;
+      renderCards();
+      messageBox.textContent = "";
+      messageBox.className = "message"; // Reset message classes
+    }
+
+    nextPattern(); // Initial load
+  </script>
+</body>
+</html

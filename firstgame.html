@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Word Buddy Match</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.cdnfonts.com/css/opendyslexic" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        /* Applying the dyslexia-friendly font and soft background */
+        body {
+            font-family: 'OpenDyslexic', sans-serif;
+            background-color: #FDF6E3; /* Soft cream background */
+        }
+
+        /* MODIFIED: Reduced letter placeholder size */
+        .letter-box {
+            width: 40px;
+            height: 40px;
+            border: 2px dashed #A9A9A9; /* Slightly thinner border */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.2s;
+        }
+        
+        .empty-box {
+            border-color: transparent;
+            background-color: rgba(0,0,0,0.02);
+        }
+
+        /* MODIFIED: Reduced draggable letter tile size */
+        .letter-tile {
+            width: 50px;
+            height: 50px;
+            cursor: grab;
+            user-select: none;
+            font-size: 2rem; /* Reduced font size */
+            line-height: 1;
+            color: #000000;
+            background-color: #A7D8DE;
+        }
+        .letter-tile:active {
+            cursor: grabbing;
+        }
+
+        .drag-over {
+            border-color: #3B82F6;
+            transform: scale(1.05);
+        }
+
+        .correct-drop {
+            border-style: solid;
+            border-color: #22C55E !important;
+        }
+        
+        .incorrect-drop {
+            border-color: #EF4444 !important;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-6xl mx-auto">
+        <div class="text-center mb-3">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Spell the Object's Name</h1>
+            <p class="text-gray-600 text-lg mt-1">Drag the letters to build the word!</p>
+        </div>
+        
+        <div class="bg-white/80 p-3 rounded-xl shadow-md mb-4 flex justify-between items-center">
+            <div class="text-lg font-semibold text-gray-700">
+                <i class="fa-regular fa-clock text-blue-500"></i>
+                Time: <span id="timer" class="font-bold text-xl text-gray-800">0s</span>
+            </div>
+             <button id="restart-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-full text-lg hover:bg-blue-700 transition-all shadow-md transform hover:scale-105">
+                New Pattern
+            </button>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-4">
+            
+            <div id="game-board" class="w-full md:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            </div>
+
+            <div class="w-full md:w-1/3 bg-white/80 p-4 rounded-2xl shadow-lg flex flex-col items-center">
+                <h2 class="text-xl font-bold text-gray-700 mb-3">Letter Pool</h2>
+                <div id="letter-pool" class="flex flex-wrap justify-center gap-2">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="results-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl text-center p-8 max-w-md w-full transform transition-all scale-95 opacity-0">
+            <h2 id="modal-title" class="text-3xl font-bold mb-2">Great Job!</h2>
+            <div id="modal-rating-icon" class="text-7xl mb-2"></div>
+            <p class="text-lg text-gray-600">You finished in</p>
+            <p id="final-time" class="text-4xl font-bold text-blue-600 my-1">0s</p>
+            <p class="text-xl font-semibold">Rating: <span id="final-rating" class="font-bold"></span></p>
+            <div class="mt-6 bg-gray-100 p-4 rounded-lg">
+                <h3 class="font-bold text-lg text-gray-700">💡 Improvement Tip</h3>
+                <p id="improvement-tip" class="text-gray-600 mt-1"></p>
+            </div>
+            <button id="play-again-btn" class="mt-8 bg-blue-600 text-white font-bold py-3 px-8 rounded-full text-lg hover:bg-blue-700 transition-colors">
+                Play Again
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const gameBoard = document.getElementById('game-board');
+            const letterPool = document.getElementById('letter-pool');
+            const timerEl = document.getElementById('timer');
+            const restartBtn = document.getElementById('restart-btn');
+            const playAgainBtn = document.getElementById('play-again-btn');
+            const resultsModal = document.getElementById('results-modal');
+            const modalContent = resultsModal.querySelector('div');
+
+            const GAME_DATA = [
+                 { name: 'bed', image: 'https://www.shutterstock.com/image-photo/wood-bed-white-bedding-isolated-600nw-1535482424.jpg' },
+                 { name: 'dog', image: 'https://static.vecteezy.com/system/resources/previews/040/143/626/non_2x/ai-generated-labrador-dog-on-white-background-photo.jpeg' },
+                 { name: 'pig', image: 'https://static.vecteezy.com/system/resources/previews/028/669/877/non_2x/a-cute-fat-pig-on-white-background-generative-ai-illustration-photo.jpeg' },
+                 { name: 'cup', image: 'https://media.istockphoto.com/id/821282266/photo/white-mug-isolated.jpg?s=612x612&w=0&k=20&c=LJCMPk0D83OKmJHahkiLzAB3OsKr83nMbL7KxSgfpfM=' },
+                 { name: 'fan', image: 'https://media.istockphoto.com/id/967902786/photo/ceiling-fan.jpg?s=612x612&w=0&k=20&c=wWsr-p_ZCMtxs3NfRUxdhfy6wj2K6IQlAyjIlbkpzJ0=' },
+                 { name: 'pot', image: 'https://png.pngtree.com/background/20231016/original/pngtree-plain-clay-pot-3d-illustration-on-white-isolated-background-picture-image_5573350.jpg' },
+                 { name: 'bus', image: 'https://img.freepik.com/premium-photo/school-bus-isolated-white-background_708636-494.jpg' },
+                 { name: 'sun', image: 'https://thumbs.dreamstime.com/b/realistic-sun-isolated-white-background-realistic-depiction-sun-isolated-white-background-showing-its-bright-366164883.jpg' },
+                 { name: 'star', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Black_star_with_white_background.svg/1280px-Black_star_with_white_background.svg.png' },
+                 { name: 'frog', image: 'https://www.shutterstock.com/image-vector/cute-frog-cartoon-vector-illustration-600nw-2426110363.jpg' },
+                 { name: 'pen', image: 'https://t3.ftcdn.net/jpg/01/95/11/56/360_F_195115692_wh4bwByEhU0JgCP7uCSzR59C7hoLzVqm.jpg' },
+                 { name: 'map', image: 'https://img.freepik.com/premium-vector/cartoon-drawing-map-with-tree-it_917506-500049.jpg' },
+                 { name: 'hat', image: 'https://img.freepik.com/premium-vector/cute-hat-cartoon-isolated-background_642458-2366.jpg' },
+                 { name: 'car', image: 'https://i.pinimg.com/736x/07/ef/87/07ef878fdd9734f674ce709bfb6523be.jpg' },
+                 { name: 'key', image: 'https://img.freepik.com/premium-vector/key-cartoon-vector-illustration-cute-key-cartoon-drawing-playful-unlocking-tool-design_648083-559.jpg' },
+                 { name: 'box', image: 'https://t3.ftcdn.net/jpg/00/92/82/34/360_F_92823408_0eEOMC4BylnwdRRFwtbtI8kCHkNMU3hL.jpg' },
+                 { name: 'web', image: 'https://png.pngtree.com/png-vector/20190927/ourmid/pngtree-spider-web-icon-isolated-on-abstract-background-png-image_1743825.jpg' },
+                 { name: 'jam', image: 'https://i.pinimg.com/736x/d5/00/bf/d500bf526277c75a1bdf4fbcbd0a42bb.jpg' },
+                 { name: 'log', image: 'https://img.freepik.com/premium-vector/wooden-log-clipart-cartoon-style-vector-illustration_761413-8215.jpg' },
+                 { name: 'six', image: 'https://img.freepik.com/premium-vector/cartoon-number-6-with-smiling-face-hands-bottom_853066-24.jpg' }
+             ];
+            const MAX_WORD_LENGTH = 5; 
+
+            let currentItems = [];
+            let totalLettersToPlace = 0;
+            let correctlyPlacedLetters = 0;
+            let timerInterval;
+            let seconds = 0;
+            let gameStarted = false;
+
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            function startGame() {
+                correctlyPlacedLetters = 0;
+                totalLettersToPlace = 0;
+                gameStarted = false;
+                seconds = 0;
+                gameBoard.innerHTML = '';
+                letterPool.innerHTML = '';
+                timerEl.textContent = '0s';
+                clearInterval(timerInterval);
+                hideModal();
+                currentItems = shuffleArray([...GAME_DATA]).slice(0, 4);
+                populateGameBoard(currentItems);
+                populateLetterPool(currentItems);
+            }
+            
+            function startTimer() {
+                if (gameStarted) return;
+                gameStarted = true;
+                const startTime = Date.now();
+                timerInterval = setInterval(() => {
+                    seconds = Math.floor((Date.now() - startTime) / 1000);
+                    timerEl.textContent = `${seconds}s`;
+                }, 1000);
+            }
+
+            function populateGameBoard(items) {
+                items.forEach(item => {
+                    totalLettersToPlace += item.name.length;
+                    const itemContainer = document.createElement('div');
+                    // MODIFIED: Reduced padding and gap inside the card
+                    itemContainer.className = 'bg-white/80 p-3 rounded-2xl shadow-md flex flex-col items-center gap-3';
+
+                    const img = document.createElement('img');
+                    img.src = item.image;
+                    img.alt = item.name;
+                    img.className = 'rounded-lg w-full h-auto aspect-[4/3] object-cover';
+                    img.onerror = () => { img.src = `https://placehold.co/200x150/ccc/333?text=${item.name}`; };
+                    itemContainer.appendChild(img);
+
+                    const boxesContainer = document.createElement('div');
+                    boxesContainer.className = 'flex justify-center gap-2';
+                    const padding = Math.floor((MAX_WORD_LENGTH - item.name.length) / 2);
+
+                    for (let i = 0; i < MAX_WORD_LENGTH; i++) {
+                        const letterBox = document.createElement('div');
+                        letterBox.className = 'letter-box rounded-lg';
+                        if (i >= padding && i < padding + item.name.length) {
+                           letterBox.dataset.letter = item.name[i - padding];
+                           addDropEvents(letterBox);
+                        } else {
+                           letterBox.classList.add('empty-box');
+                        }
+                        boxesContainer.appendChild(letterBox);
+                    }
+                    
+                    itemContainer.appendChild(boxesContainer);
+                    gameBoard.appendChild(itemContainer);
+                });
+            }
+
+            function populateLetterPool(items) {
+                const requiredLetters = [];
+                items.forEach(item => {
+                    item.name.split('').forEach(letter => requiredLetters.push(letter));
+                });
+
+                const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+                while (requiredLetters.length < totalLettersToPlace + 3) {
+                    const randomLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
+                    requiredLetters.push(randomLetter);
+                }
+
+                const letterArray = shuffleArray(requiredLetters);
+
+                letterArray.forEach(letter => {
+                    const tile = document.createElement('div');
+                    tile.id = `tile-${letter}-${Math.random()}`;
+                    tile.className = 'letter-tile font-bold rounded-lg flex items-center justify-center shadow-md';
+                    tile.textContent = letter;
+                    tile.draggable = true;
+                    addDragEvents(tile);
+                    letterPool.appendChild(tile);
+                });
+            }
+
+            function addDragEvents(tile) {
+                tile.addEventListener('dragstart', e => {
+                    if (!gameStarted) startTimer();
+                    e.dataTransfer.setData('text/plain', e.target.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                    setTimeout(() => tile.classList.add('opacity-50'), 0);
+                });
+
+                tile.addEventListener('dragend', e => {
+                    e.target.classList.remove('opacity-50');
+                });
+            }
+
+            function addDropEvents(box) {
+                box.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    if (!box.hasChildNodes()) {
+                       box.classList.add('drag-over');
+                    }
+                });
+
+                box.addEventListener('dragleave', e => {
+                    box.classList.remove('drag-over');
+                });
+
+                box.addEventListener('drop', e => {
+                    e.preventDefault();
+                    box.classList.remove('drag-over');
+                    if (box.hasChildNodes()) return;
+
+                    const tileId = e.dataTransfer.getData('text/plain');
+                    const tile = document.getElementById(tileId);
+                    const droppedLetter = tile.textContent;
+                    
+                    if (droppedLetter === box.dataset.letter) {
+                        box.appendChild(tile);
+                        tile.draggable = false;
+                        tile.classList.remove('cursor-grab');
+                        tile.style.backgroundColor = '#22C55E';
+                        box.classList.add('correct-drop');
+                        correctlyPlacedLetters++;
+                        checkWinCondition();
+                    } else {
+                        box.classList.add('incorrect-drop');
+                        setTimeout(() => box.classList.remove('incorrect-drop'), 500);
+                    }
+                });
+            }
+            
+            function checkWinCondition() {
+                if (correctlyPlacedLetters === totalLettersToPlace) {
+                    clearInterval(timerInterval);
+                    setTimeout(showResults, 500);
+                }
+            }
+            
+            function showResults() {
+                const timePerLetter = seconds / totalLettersToPlace;
+                let rating, color, icon, title, tip;
+
+                if (timePerLetter <= 3) {
+                    rating = 'Best';
+                    color = 'text-green-500';
+                    icon = '🏆';
+                    title = 'Excellent!';
+                    tip = "Amazing speed and accuracy! Keep practicing to stay sharp.";
+                } else if (timePerLetter <= 6) {
+                    rating = 'Medium';
+                    color = 'text-yellow-500';
+                    icon = '👍';
+                    title = 'Great Job!';
+                    tip = "To get even faster, try saying the letter's sound out loud as you drag it.";
+                } else {
+                    rating = 'Progressing';
+                    color = 'text-orange-500';
+                    icon = '💪';
+                    title = 'Good Effort!';
+                    tip = "Try to look at the shape of the letter carefully before dragging. Take your time, speed will come with practice.";
+                }
+
+                document.getElementById('modal-title').textContent = title;
+                document.getElementById('final-time').textContent = `${seconds}s`;
+                const finalRatingEl = document.getElementById('final-rating');
+                finalRatingEl.textContent = rating;
+                finalRatingEl.className = `font-bold ${color}`;
+                document.getElementById('modal-rating-icon').textContent = icon;
+                document.getElementById('improvement-tip').textContent = tip;
+
+                resultsModal.classList.remove('hidden');
+                setTimeout(() => {
+                    modalContent.classList.remove('scale-95', 'opacity-0');
+                }, 10);
+            }
+
+            function hideModal() {
+                modalContent.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    resultsModal.classList.add('hidden');
+                }, 300);
+            }
+
+            restartBtn.addEventListener('click', startGame);
+            playAgainBtn.addEventListener('click', startGame);
+
+            startGame();
+        });
+    </script>
+</body>
+</html>

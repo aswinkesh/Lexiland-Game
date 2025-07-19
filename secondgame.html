@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EchoWriter
+</title>
+  
+  <link href="https://fonts.cdnfonts.com/css/opendyslexic" rel="stylesheet">
+  
+  <style>
+ body {
+   font-family: 'OpenDyslexic', sans-serif;
+   text-align: center;
+   background-color: #FDF6E3; /* Soft cream background */
+   padding: 30px;
+   min-height: 100vh;
+ }
+ 
+ .game-container {
+   background: #FFFFFF;
+   padding: 30px;
+   max-width: 600px;
+   margin: auto;
+   border-radius: 20px;
+   box-shadow: 0 8px 25px rgba(169, 169, 169, 0.2);
+   border: 3px solid #A9A9A9;
+ }
+ 
+ h2 {
+   color: #000000;
+   font-size: 28px;
+   margin-bottom: 20px;
+ }
+ 
+ .controls {
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   gap: 15px;
+   margin: 20px 0;
+   flex-wrap: wrap;
+ }
+ 
+ .timer {
+   font-size: 22px;
+   margin: 15px;
+   background: #e0f7fa; /* Updated color */
+   padding: 10px 20px;
+   border-radius: 15px;
+   border: 2px solid #3B82F6;
+   color: #000000;
+   font-weight: bold;
+ }
+ 
+ .feedback {
+   font-size: 40px;
+   margin: 15px;
+   min-height: 50px;
+ }
+ 
+ /* MODAL (POP-UP) STYLES */
+ .result-popup-overlay {
+   display: none; /* Hidden by default */
+   position: fixed; /* Stay in place */
+   z-index: 1000; /* Sit on top */
+   left: 0;
+   top: 0;
+   width: 100%; /* Full width */
+   height: 100%; /* Full height */
+   overflow: auto; /* Enable scroll if needed */
+   background-color: rgba(0, 0, 0, 0.5); /* Black w/ opacity */
+   /* Flexbox to center the content */
+   justify-content: center;
+   align-items: center;
+ }
+
+ .result-popup-content {
+   background: #e0f7fa; /* Updated color */
+   border: 3px solid #22C55E;
+   padding: 25px;
+   border-radius: 20px;
+   box-shadow: 0 5px 15px rgba(34, 197, 94, 0.2);
+   width: 90%;
+   max-width: 500px; /* Max width for the content card */
+   text-align: center;
+ }
+ 
+ .result-popup-content h3 {
+   color: #000000;
+   font-size: 24px;
+   margin-bottom: 15px;
+ }
+ 
+ .challenge-status {
+   font-size: 18px;
+   font-weight: bold;
+   margin-top: 15px;
+   padding: 10px;
+   border-radius: 10px;
+ }
+ 
+ .status-success {
+   color: #000000;
+   background: #FFFFFF;
+   border: 2px solid #22C55E;
+ }
+ 
+ .status-fail {
+   color: #000000;
+   background: #FFFFFF;
+   border: 2px solid #EF4444;
+ }
+ 
+ button {
+   font-family: 'OpenDyslexic', sans-serif;
+   padding: 12px 25px;
+   font-size: 16px;
+   margin: 8px;
+   border-radius: 15px;
+   border: 2px solid #3B82F6;
+   background: #e0f7fa; /* Updated color */
+   color: #000000;
+   cursor: pointer;
+   font-weight: bold;
+   box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+   transition: all 0.3s ease;
+ }
+ 
+ button:hover {
+   background: #FFFFFF;
+   border-color: #22C55E;
+   transform: translateY(-2px);
+   box-shadow: 0 6px 12px rgba(34, 197, 94, 0.3);
+ }
+ 
+ button:active {
+   transform: translateY(0);
+ }
+ 
+ #restartBtn {
+   background: #3B82F6;
+   border-color: #FFFFFF;
+   color: #FFFFFF;
+ }
+ 
+ #restartBtn:hover {
+   background: #22C55E;
+   border-color: #FFFFFF;
+ }
+ 
+ input[type="text"], select {
+   padding: 12px;
+   font-size: 16px;
+   margin-top: 15px;
+   border-radius: 15px;
+   border: 3px solid #A9A9A9;
+   font-family: 'OpenDyslexic', sans-serif;
+   background: #FFFFFF;
+   color: #000000;
+   box-shadow: inset 0 2px 4px rgba(169, 169, 169, 0.1);
+ }
+
+ input[type="text"] {
+   width: 80%;
+ }
+
+ input[type="text"]:focus, select:focus {
+   outline: none;
+   border-color: #3B82F6;
+   box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+ }
+ 
+ select {
+   background: #e0f7fa; /* Updated color */
+   border: 3px solid #3B82F6;
+   color: #000000;
+   font-weight: bold;
+ }
+ 
+ .result-popup-content p {
+   background: rgba(255, 255, 255, 0.8);
+   padding: 8px 15px;
+   margin: 10px 0;
+   border-radius: 10px;
+   border: 2px solid #A9A9A9;
+   color: #000000;
+   font-weight: bold;
+ }
+
+ /* Animation for incorrect feedback */
+ @keyframes shake {
+   0%, 100% { transform: translateX(0); }
+   25% { transform: translateX(-5px); }
+   75% { transform: translateX(5px); }
+ }
+ 
+ .incorrect-feedback {
+   animation: shake 0.5s;
+ }
+</style>
+</head>
+<body>
+  <div class="game-container" style="background-color: #e0f7fa;">
+    <h2>Listen and Type Game</h2>
+    <div class="timer" id="timer">⏱️ Time: 60s</div>
+    <div class="controls">
+      <button onclick="playAudio()">🔊 Play</button>
+      <select id="voiceSelect"></select>
+    </div>
+    
+    <input type="text" id="userInput" placeholder="Type what you hear..." oninput="checkLiveMatch()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" disabled>
+    <div class="feedback" id="emojiFeedback"></div>
+    <button onclick="submitAnswer()">Submit</button>
+    
+  </div>
+
+  <div class="result-popup-overlay" id="resultCard">
+    <div class="result-popup-content">
+      <h3>Result</h3>
+      <p id="accuracyText"></p>
+      <p id="timeTakenText"></p>
+      <p id="speedRemark"></p>
+      <p id="challengeStatus" class="challenge-status"></p>
+      <button id="restartBtn" onclick="handleRestart()">Restart</button>
+    </div>
+  </div>
+
+  <script>
+    const sentences = [
+      "The sun is shining bright", "I like red apples", "My cat sleeps all day",
+      "We read a fun book", "She sings a sweet song", "Birds fly in the sky",
+      "The cake is so soft", "It is a cold day", "The dog runs fast",
+      "He plays with a ball", "We saw the moon rise", "It is time to eat",
+      "The fish swims fast", "They jump on the bed", "I love to draw",
+      "We dance to music", "She has a big smile", "The stars are bright",
+      "He reads every night", "We went to school"
+    ];
+    const synth = window.speechSynthesis;
+    const voiceSelect = document.getElementById("voiceSelect");
+    const userInput = document.getElementById("userInput");
+    const resultCard = document.getElementById("resultCard"); // Reference to the popup overlay
+    let voices = [];
+    let currentIndex = 0;
+    let startTime;
+    let timerInterval;
+    let timeLeft = 60;
+    let currentSentence = sentences[currentIndex].toLowerCase();
+    let latestAccuracy = 0;
+
+    function populateVoiceList() {
+      voices = synth.getVoices();
+      voiceSelect.innerHTML = '';
+       for (const voice of voices) {
+        if(voice.lang.includes('en')) {
+            const option = document.createElement("option");
+            let displayName = voice.name.split('(')[0].trim();
+            displayName = displayName.replace('Microsoft', '').replace('Google', '').trim();
+            option.textContent = `${displayName} (${voice.lang})`;
+            option.setAttribute("data-lang", voice.lang);
+            option.setAttribute("data-name", voice.name);
+            voiceSelect.appendChild(option);
+        }
+      }
+    }
+    populateVoiceList();
+    if (synth.onvoiceschanged !== undefined) {
+      synth.onvoiceschanged = populateVoiceList;
+    }
+
+    function playAudio() {
+      userInput.disabled = false;
+      userInput.focus();
+      currentSentence = sentences[currentIndex].toLowerCase();
+      const utter = new SpeechSynthesisUtterance(currentSentence);
+      
+      // Ensure voiceSelect has options before trying to access them
+      if (voiceSelect.selectedOptions.length > 0) {
+        const selectedVoiceName = voiceSelect.selectedOptions[0].getAttribute("data-name");
+        const selectedVoice = voices.find(voice => voice.name === selectedVoiceName);
+        if(selectedVoice) {
+            utter.voice = selectedVoice;
+        }
+      }
+
+      synth.speak(utter);
+      userInput.value = "";
+      document.getElementById("emojiFeedback").textContent = "";
+      resultCard.style.display = "none";
+      startTime = new Date();
+      timeLeft = 60;
+      clearInterval(timerInterval);
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    function updateTimer() {
+      timeLeft--;
+      document.getElementById("timer").textContent = `⏱️ Time: ${timeLeft}s`;
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        document.getElementById("timer").textContent = "⏱️ Time's up!";
+        submitAnswer();
+      }
+    }
+
+    function checkLiveMatch() {
+      const input = userInput.value.toLowerCase();
+      const target = currentSentence.slice(0, input.length);
+      const feedback = document.getElementById("emojiFeedback");
+      
+      if (input === target) {
+        feedback.textContent = "😊";
+        feedback.classList.remove("incorrect-feedback");
+      } else {
+        feedback.textContent = "😐";
+        feedback.classList.add("incorrect-feedback");
+      }
+    }
+
+    function submitAnswer() {
+      userInput.disabled = true;
+      clearInterval(timerInterval);
+      const input = userInput.value.toLowerCase().trim();
+      const correctWords = currentSentence.split(" ");
+      const inputWords = input.split(" ");
+      let matches = 0;
+      correctWords.forEach((word, i) => {
+        if (inputWords[i] === word) matches++;
+      });
+      const accuracy = Math.floor((matches / correctWords.length) * 100);
+      latestAccuracy = accuracy;
+      const timeTaken = Math.floor((new Date() - startTime) / 1000);
+      
+      document.getElementById("timeTakenText").textContent = `⏱️ Time Taken: ${timeTaken} seconds`;
+      
+      let speedRemark = "";
+      if (timeTaken <= 15) speedRemark = "🏆 Best";
+      else if (timeTaken <= 20) speedRemark = "👍 Closer to Best";
+      else if (timeTaken <= 30) speedRemark = "🙂 Medium";
+      else speedRemark = "👀 Try to be quicker!";
+      
+      document.getElementById("accuracyText").textContent = `✅ Accuracy: ${accuracy}%`;
+      document.getElementById("speedRemark").textContent = speedRemark;
+      
+      // Use 'flex' to show the popup overlay
+      resultCard.style.display = "flex"; 
+      
+      const restartBtn = document.getElementById("restartBtn");
+      const statusMsg = document.getElementById("challengeStatus");
+      
+      if (accuracy >= 80) {
+        statusMsg.textContent = "Great job! You can proceed to the next challenge.";
+        statusMsg.className = "challenge-status status-success";
+        restartBtn.textContent = "➡️ Next Challenge";
+      } else {
+        statusMsg.textContent = "You need 80% or higher to unlock the next challenge.";
+        statusMsg.className = "challenge-status status-fail";
+        restartBtn.textContent = "🔁 Try Again";
+      }
+    }
+
+    function handleRestart() {
+      if (latestAccuracy >= 80) {
+        if (currentIndex < sentences.length - 1) {
+          currentIndex++;
+          playAudio();
+        } else {
+          alert("🎉 You've completed all challenges!");
+          resultCard.style.display = "none";
+        }
+      } else {
+        playAudio();
+      }
+    }
+  </script>
+</body>
+</html>

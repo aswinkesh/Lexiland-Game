@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lexiland</title>
+    <link href="https://fonts.cdnfonts.com/css/opendyslexic" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'OpenDyslexic', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8fbff 0%, #FDF6E3 50%, #f0f8e8 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Background decorative elements */
+        .bg-decoration {
+            position: fixed;
+            opacity: 0.1;
+            z-index: 1;
+            pointer-events: none;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .bg-decoration:nth-child(1) {
+            top: 10%;
+            left: 5%;
+            font-size: 3rem;
+            animation-delay: 0s;
+        }
+
+        .bg-decoration:nth-child(2) {
+            top: 20%;
+            right: 10%;
+            font-size: 2.5rem;
+            animation-delay: 1s;
+        }
+
+        .bg-decoration:nth-child(3) {
+            top: 60%;
+            left: 8%;
+            font-size: 2rem;
+            animation-delay: 2s;
+        }
+
+        .bg-decoration:nth-child(4) {
+            bottom: 15%;
+            right: 15%;
+            font-size: 2.8rem;
+            animation-delay: 3s;
+        }
+
+        .bg-decoration:nth-child(5) {
+            top: 40%;
+            left: 50%;
+            font-size: 2.2rem;
+            animation-delay: 4s;
+        }
+
+        .bg-decoration:nth-child(6) {
+            bottom: 40%;
+            left: 20%;
+            font-size: 1.8rem;
+            animation-delay: 5s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: slideDown 1s ease-out;
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            color: #4a90e2;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .logo::before {
+            content: "🎮";
+            font-size: 3rem;
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            color: #6b7280;
+            margin-top: 10px;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 10px;
+            margin-bottom: 50px;
+            flex-grow: 1;
+            align-items: center;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            border: 3px solid transparent;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .game-card:nth-child(1) { animation-delay: 0.1s; }
+        .game-card:nth-child(2) { animation-delay: 0.2s; }
+        .game-card:nth-child(3) { animation-delay: 0.3s; }
+        .game-card:nth-child(4) { animation-delay: 0.4s; }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: transform 0.6s;
+            transform: translateX(-100%) translateY(-100%) rotate(45deg);
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            border-color: #4a90e2;
+        }
+
+        .game-card:hover::before {
+            transform: translateX(100%) translateY(100%) rotate(45deg);
+        }
+
+        .game-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            display: block;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .game-title {
+            font-size: 1.5rem;
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .game-description {
+            color: #6b7280;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .word-buddy { border-left: 4px solid #10b981; }
+        .echo-writer { border-left: 4px solid #f59e0b; }
+        .sound-snap { border-left: 4px solid #ef4444; }
+        .say-aloud { border-left: 4px solid #8b5cf6; }
+
+        .about-section {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 100;
+        }
+
+        .about-btn {
+            background: linear-gradient(135deg, #4a90e2, #357abd);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+            transition: all 0.3s ease;
+            font-family: 'OpenDyslexic', sans-serif;
+        }
+
+        .about-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+        }
+
+        .about-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .about-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+            font-family: 'OpenDyslexic', sans-serif;
+        }
+
+        .about-title {
+            font-size: 2rem;
+            color: #4a90e2;
+            margin-bottom: 20px;
+        }
+
+        .about-text {
+            color: #6b7280;
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2.5rem;
+            }
+            
+            .games-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .about-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+            
+            .about-section {
+                bottom: 20px;
+                right: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background decorations -->
+    <div class="bg-decoration">🎈</div>
+    <div class="bg-decoration">🌳</div>
+    <div class="bg-decoration">🧸</div>
+    <div class="bg-decoration">⭐</div>
+    <div class="bg-decoration">🎯</div>
+    <div class="bg-decoration">🌈</div>
+    <div class="bg-decoration">🎪</div>
+    <div class="bg-decoration">🚂</div>
+
+    <div class="container">
+        <header>
+            <h1 class="logo">Lexiland</h1>
+            <p class="tagline">Fun Learning Games for Little Minds</p>
+        </header>
+
+        <div class="games-grid">
+            <div class="game-card word-buddy" onclick="location.href='firstgame.html'">
+                <span class="game-icon">📝</span>
+                <h2 class="game-title">Word Buddy Match</h2>
+                <p class="game-description">Match words with pictures and sounds! Perfect for building vocabulary and reading skills.</p>
+            </div>
+
+            <div class="game-card echo-writer" onclick="location.href='secondgame.html'">
+                <span class="game-icon">✏️</span>
+                <h2 class="game-title">EchoWriter</h2>
+                <p class="game-description">Listen and write! Improve spelling and listening skills with fun audio prompts.</p>
+            </div>
+
+            <div class="game-card sound-snap" onclick="location.href='thirdgame.html'">
+                <span class="game-icon">🔊</span>
+                <h2 class="game-title">Sound Snap</h2>
+                <p class="game-description">Quick! Match the sound to the right picture. Train your ears and reflexes!</p>
+            </div>
+
+            <div class="game-card say-aloud" onclick="location.href='fourthgame.html'">
+                <span class="game-icon">🗣️</span>
+                <h2 class="game-title">Say It Aloud</h2>
+                <p class="game-description">Practice speaking and pronunciation with interactive voice games!</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="about-section">
+        <button class="about-btn" onclick="openAbout()">ℹ️</button>
+    </div>
+
+    <!-- About Modal -->
+    <div class="about-modal" id="aboutModal">
+        <div class="about-content">
+            <button class="close-btn" onclick="closeAbout()">&times;</button>
+            <h2 class="about-title">About Lexiland</h2>
+            <p class="about-text">
+                Welcome to Lexiland! We create fun, educational games designed specifically for young dyslexia learners.
+Our games empower children with dyslexia to develop essential skills like reading, writing, listening, and speaking in an engaging, stress-free environment.
+<br><br>
+All our games are designed with accessibility in mind, using dyslexia-friendly fonts and gentle colors to ensure every child can learn and play comfortably.
+<br><br>
+Created by Aswinkesh A, Emil Baiju, Gino James, and Jacob Sam Jose.
+<br><br>
+Let the learning adventure begin! 🌟
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function playGame(gameId) {
+            // Add a fun click animation
+            const card = event.currentTarget;
+            card.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                card.style.transform = '';
+            }, 150);
+
+            // Game launch logic would go here
+            alert(`Starting ${gameId.replace('-', ' ')}! 🎮`);
+        }
+
+        function openAbout() {
+            document.getElementById('aboutModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAbout() {
+            document.getElementById('aboutModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('aboutModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAbout();
+            }
+        });
+
+        // Add some interactive sparkles on card hover
+        document.querySelectorAll('.game-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                // Create sparkle effect
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        createSparkle(this);
+                    }, i * 100);
+                }
+            });
+        });
+
+        function createSparkle(element) {
+            const sparkle = document.createElement('div');
+            sparkle.innerHTML = '✨';
+            sparkle.style.position = 'absolute';
+            sparkle.style.fontSize = '1rem';
+            sparkle.style.pointerEvents = 'none';
+            sparkle.style.zIndex = '1000';
+            
+            const rect = element.getBoundingClientRect();
+            sparkle.style.left = (rect.left + Math.random() * rect.width) + 'px';
+            sparkle.style.top = (rect.top + Math.random() * rect.height) + 'px';
+            
+            document.body.appendChild(sparkle);
+            
+            sparkle.animate([
+                { transform: 'translateY(0) scale(1)', opacity: 1 },
+                { transform: 'translateY(-50px) scale(0)', opacity: 0 }
+            ], {
+                duration: 1000,
+                easing: 'ease-out'
+            }).onfinish = () => sparkle.remove();
+        }
+
+        // Add gentle background movement
+        document.addEventListener('mousemove', (e) => {
+            const decorations = document.querySelectorAll('.bg-decoration');
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            
+            decorations.forEach((decoration, index) => {
+                const speed = (index + 1) * 0.5;
+                const moveX = (x - 0.5) * speed;
+                const moveY = (y - 0.5) * speed;
+                decoration.style.transform = `translate(${moveX}px, ${moveY}px)`;
+            });
+        });
+    </script>
+</body>
+</html>
